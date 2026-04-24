@@ -83,7 +83,6 @@ int match_condition(const Report *r, const char *field,
 
 
 
-
 //filter logic
 int filter_reports(const char *district, const char **conditions, int n_conditions)
 {
