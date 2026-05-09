@@ -4,10 +4,10 @@
 #include <unistd.h>
 #include "monitor.h"
 
-/* flag set by SIGINT to exit the main loop */
+// flag set by SIGINT to exit the main loop 
 static volatile sig_atomic_t running = 1;
 
-/* SIGUSR1 handler — new report was added */
+// SIGUSR1 handler — new report was added 
 static void handle_sigusr1(int sig)
 {
     (void)sig;
@@ -15,7 +15,7 @@ static void handle_sigusr1(int sig)
     fflush(stdout);
 }
 
-/* SIGINT handler — shutdown */
+// SIGINT handler — shutdown 
 static void handle_sigint(int sig)
 {
     (void)sig;
@@ -24,7 +24,7 @@ static void handle_sigint(int sig)
 
 int main(void)
 {
-    /* write PID to .monitor_pid */
+    //write PID to .monitor_pid 
     FILE *f = fopen(MONITOR_PID_FILE, "w");
     if (!f) {
         perror(MONITOR_PID_FILE);
@@ -36,7 +36,7 @@ int main(void)
     printf("[monitor] started with PID %d\n", getpid());
     fflush(stdout);
 
-    /* set up signal handlers using sigaction — not signal() */
+    //set up signal handlers using sigaction — not signal() 
     struct sigaction sa_usr1, sa_int;
 
     sa_usr1.sa_handler = handle_sigusr1;
@@ -49,7 +49,7 @@ int main(void)
     sa_int.sa_flags = 0;
     sigaction(SIGINT, &sa_int, NULL);
 
-    /* wait for signals in a loop */
+    // wait for signals in a loop 
     while (running)
         pause();
 
