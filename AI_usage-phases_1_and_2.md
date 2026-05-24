@@ -1,4 +1,4 @@
-# AI Usage Documentation — Phases 1 and 2
+# AI Usage Documentation — Phases 1, 2 and 3
 
 ## Tool Used
 Claude (claude-sonnet-4-6), accessed via claude.ai
@@ -141,3 +141,62 @@ conceptual understanding, not for generating any functions or logic.
   to communicate between two unrelated processes.
 - The pattern of writing a PID file on startup and removing it on exit is
   a standard UNIX convention used by real-world daemons and services.
+
+---
+
+# Phase 3
+
+## AI Usage in Phase 3
+
+No AI-generated code was produced with AI assistance in Phase 3. Everything
+was implemented independently, covering:
+- `city_hub.c` — interactive terminal interface handling `start_monitor`
+  and `calculate_scores` commands
+- `scorer.c` — standalone program that reads district reports and computes
+  a workload score per inspector
+- Updated `monitor_main.c` — detects a running monitor instance on startup
+  and uses a structured output format for pipe-based communication
+
+## AI consulted for — conceptual clarification
+
+Two concepts were clarified with AI before implementation:
+
+**1. Combining pipe() and dup2() to capture child output**
+> How do you set up a pipe so that a child process's stdout is readable
+> by the parent?
+
+The AI clarified that `pipe()` produces two descriptors — one for reading
+and one for writing. After `fork()`, the child replaces its stdout with the
+write end using `dup2(pipefd[1], STDOUT_FILENO)`, then closes both raw
+descriptors. The parent closes the write end and reads from the read end.
+This pattern was applied in both `run_hub_mon()` and `run_calculate_scores()`
+inside `city_hub.c`.
+
+**2. Distinguishing message types over a pipe**
+> What is a simple way for a parent to tell apart different kinds of messages
+> arriving from a child through a pipe?
+
+The AI suggested using a fixed string prefix per message type — for example
+`MSG:` for informational output and `ERR:` for error conditions. The parent
+reads line by line and branches on the prefix. This approach was used to
+modify `monitor_main.c` output and parse it correctly in `city_hub.c`.
+
+## What I wrote myself — Phase 3
+
+Every function and file in Phase 3 was written without AI code generation.
+AI was only used to understand the underlying concepts before sitting down
+to write the implementation.
+
+## What I learned — Phase 3
+
+- `dup2()` replaces a file descriptor with another — calling it before
+  `exec()` in the child means the new program writes to the pipe without
+  knowing it, since it simply writes to stdout as usual.
+- Forgetting to close the write end of the pipe in the parent is a common
+  bug — the parent will never see EOF on the read end and will block
+  indefinitely waiting for data that never arrives.
+- A lightweight prefix-based protocol is sufficient for distinguishing
+  message categories over a pipe — no need for complex serialization.
+- `fdopen()` wraps a raw file descriptor in a `FILE*`, enabling `fgets()`
+  for convenient line-by-line reading, which is far simpler than managing
+  partial reads manually with `read()`.
